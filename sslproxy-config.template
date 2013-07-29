@@ -1,0 +1,2 @@
+ProxyPass /ssl/$domain http://$domain/
+ProxyPassReverse /ssl/$domain http://$domain/

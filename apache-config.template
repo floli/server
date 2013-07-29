@@ -1,0 +1,11 @@
+<VirtualHost *:80>
+        ServerName $domain
+        ServerAlias *.$domain $aliases
+        AssignUserID $user $user
+        DocumentRoot /home/$user/$domain/pub
+        CustomLog /home/$user/$domain/log/access.log combined
+        ErrorLog /home/$user/$domain/log/error.log
+        php_admin_value sendmail_path "/usr/sbin/sendmail -t -i -f webmaster@$domain"
+        php_admin_value open_basedir "/home/$user"
+        php_admin_value upload_tmp_dir "/home/$user/$domain/tmp"
+</VirtualHost>
