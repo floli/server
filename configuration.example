@@ -1,0 +1,7 @@
+# Move this file to configuration
+
+[CREDENTIALS]
+DB_USER = system
+DB_PASSWD = XXX
+DATABASE = system
+
