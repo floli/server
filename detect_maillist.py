@@ -4,7 +4,9 @@ import email, email.utils, sys
 import os.path, subprocess
 
 """
-Example for .mailfilter:
+This script reads an email from standard input and scans for headers indicating it is from a mailing list. If so, a corresponding maildir folder is created in MDIR and a X-Target-Folder is added to the message.
+
+This header can be read out by an MDA (Mail Delivery Agent). Example for Courier Maildrop .mailfilter:
 
 if ($ADR eq "mailinglists@centershock.net")
 {
@@ -23,8 +25,8 @@ known_lists = {
     # "scipy-user.scipy.org" : "scipy-user",
 }
 
-# Base Maildir in which the subfolders are crated
-MDIR = "mailinglists@centershock.net"
+# Base Maildir in which the subfolders are created, relative to your HOME.
+MDIR = "Mail/mailinglists@centershock.net"
 
 # Headers to get the listname from, in ordner.
 headers = ["X-Mailing-List", "List-Id", "List-ID"]
@@ -44,7 +46,7 @@ def get_foldername(listname):
 
 
 # Better be sure about relative paths
-MDIR = os.path.expanduser(os.path.join("~", "Mail", MDIR))
+MDIR = os.path.expanduser(os.path.join("~", MDIR))
 
 msg = email.message_from_file(sys.stdin)
 
