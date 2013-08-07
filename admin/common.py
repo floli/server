@@ -33,10 +33,8 @@ class DB:
         try:
             cursor = self.conn.cursor()
             if len(paras):
-                print sql, paras
                 ret = cursor.execute(sql, paras)
             else:
-                print sql
                 ret = cursor.execute(sql)
             resultSet = cursor.fetchall()
             cursor.close()
