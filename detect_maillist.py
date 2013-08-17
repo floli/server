@@ -4,7 +4,8 @@ import email, email.utils, sys
 import os.path, subprocess
 
 """
-This script reads an email from standard input and scans for headers indicating it is from a mailing list. If so, a corresponding maildir folder is created in MDIR and a X-Target-Folder is added to the message.
+This script reads an email from standard input and scans for headers indicating it is from a mailing list.
+If so, a corresponding maildir folder is created in MDIR and a X-Target-Folder is added to the message.
 
 This header can be read out by an MDA (Mail Delivery Agent). Example for Courier Maildrop .mailfilter:
 
