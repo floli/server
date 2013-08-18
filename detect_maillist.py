@@ -66,16 +66,16 @@ listname = email.utils.parseaddr(listname)[1]
 foldername = get_foldername(listname)
 
 # Some logging
-f = open("detect_maillist.log", "a")
-f.write(listname + " => " + foldername + "\n")
+# f = open("detect_maillist.log", "a")
+# f.write(listname + " => " + foldername + "\n")
 
 
 # Create dir using maildirmake, if not existing
 if not os.path.isdir(os.path.join(MDIR, "." + foldername)):
     subprocess.Popen( ["maildirmake", "-f", foldername, MDIR] )
-    f.write("Created Dir: " + foldername + "\n")
+    # f.write("Created Dir: " + foldername + "\n")
 
-f.close()
+# f.close()
 
 # This is for maildrop or another MDA.
 msg["X-Target-Folder"] = foldername
