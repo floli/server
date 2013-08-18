@@ -53,7 +53,7 @@ account account_type action [options]
 
 def check_args(args, parser):
     """ Checks validity of arguments. """    
-    if len(args) <> 2:
+    if len(args) != 2:
         parser.print_help()
         sys.exit(1)
 
@@ -157,7 +157,7 @@ def process_dir(options):
     """ Checks if the given directory is under the homedir of the user and converts a relative path into a absolute one."""
     import os
     options.directory = os.path.realpath(options.directory)
-    if options.directory[:len(options.home)] <> options.home:
+    if options.directory[:len(options.home)] != options.home:
         print "Directory must be under your home directory!"
         sys.exit(-1)
         

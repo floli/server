@@ -109,7 +109,7 @@ def rebuildAwstatsConfig():
 def test_and_create(path, user):
      """ Tests if a directory exists, if not creates it with 0700. """
      if not os.access(path, os.F_OK):
-         os.mkdir(path, 0700)
+         os.mkdir(path, 0o700)
          uid = pwd.getpwnam(user).pw_uid
          gid = pwd.getpwnam(user).pw_gid
          os.chown(path, uid, gid)
@@ -139,7 +139,7 @@ def moveFiles():
     move("generated-logrotate.conf", "/etc/logrotate.d/generated-logrotate.conf")
     move("sslproxy.conf", "/etc/apache2/sslproxy.conf")
     move("rotate_and_report", "/etc/cron.daily/rotate_and_report")
-    os.chmod("/etc/cron.daily/rotate_and_report", 0755)
+    os.chmod("/etc/cron.daily/rotate_and_report", 0o755)
 
     # Remove previous awstats files
     files = glob.glob("/etc/awstats/awstats.*.*.conf")
