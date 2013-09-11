@@ -1,6 +1,6 @@
 #!/usr/bin/python2
 
-import email, email.utils, sys
+import email, email.utils, re, sys
 import os.path, subprocess
 
 """
@@ -26,10 +26,16 @@ known_lists = {
     # "scipy-user.scipy.org" : "scipy-user",
 }
 
+# Dictionary of headers that need special treatment for listname extraction
+# First match group of regular expresion is taken. email.utils.parseaddr will still be applied on match
+known_headers = {
+    "List-Post" : r"<mailto:(.*)>"  # Matches e.g. "<mailto:postfix-users@postfix.org>" as seen on Majordomo lists
+}
+
 # Base Maildir in which the subfolders are created, relative to your HOME.
 MDIR = "Mail/mailinglists@centershock.net"
 
-# Headers to get the listname from, in ordner.
+# Headers to get the listname from, in order.
 headers = ["X-Mailing-List", "List-Id", "List-ID"]
 
 
@@ -52,10 +58,16 @@ MDIR = os.path.expanduser(os.path.join("~", MDIR))
 msg = email.message_from_file(sys.stdin)
 
 # Get value from first found header
-for h in headers:
+for h in headers + known_headers.keys():
     listname = msg[h]
     if listname != None:
         break
+
+if h in known_headers:
+    try:
+        listname = re.match(known_headers[h], listname).groups()[0]
+    except AttributeError:
+        listname = None
 
 # No header found, Exit.
 if listname == None:
