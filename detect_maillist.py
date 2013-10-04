@@ -20,6 +20,8 @@ if ($ADR eq "mailinglists@centershock.net")
 }
 """
 
+# Base Maildir in which the subfolders are created, relative to your HOME.
+MDIR = "Mail/mailinglists@centershock.net"
 
 # Dictionary of listname => folder mappings. Can be used to overwrite the heuristic.
 known_lists = {
@@ -32,8 +34,10 @@ known_headers = {
     "List-Post" : r"<mailto:(.*)>"  # Matches e.g. "<mailto:postfix-users@postfix.org>" as seen on Majordomo lists
 }
 
-# Base Maildir in which the subfolders are created, relative to your HOME.
-MDIR = "Mail/mailinglists@centershock.net"
+# Names that are invalid for mailing lists. 
+# If a list with a such a name is detected, the mail is not treated as list post.
+invalid_names = ["users", "mailman"]
+
 
 # Headers to get the listname from, in order.
 headers = ["X-Mailing-List", "List-Id", "List-ID"]
@@ -63,14 +67,14 @@ for h in headers + known_headers.keys():
     if listname != None:
         break
 
-if h in known_headers:
+if h in known_headers and listname != None:
     try:
         listname = re.match(known_headers[h], listname).groups()[0]
     except AttributeError:
         listname = None
 
-# No header found, Exit.
-if listname == None:
+# No header found or listname is invalid, Exit.
+if listname == None or listname in invalid_names:
     sys.stdout.write(msg.as_string())
     sys.exit(0)
 
