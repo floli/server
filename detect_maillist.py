@@ -62,7 +62,7 @@ MDIR = os.path.expanduser(os.path.join("~", MDIR))
 msg = email.message_from_file(sys.stdin)
 
 # Get value from first found header
-for h in headers + known_headers.keys():
+for h in known_headers.keys() + headers:
     listname = msg[h]
     if listname != None:
         break
