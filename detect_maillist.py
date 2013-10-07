@@ -34,8 +34,8 @@ known_headers = {
     "List-Post" : r"<mailto:(.*)>"  # Matches e.g. "<mailto:postfix-users@postfix.org>" as seen on Majordomo lists
 }
 
-# Names that are invalid for mailing lists. 
-# If a list with a such a name is detected, the mail is not treated as list post.
+# Names that are invalid for folders. 
+# If a target folder with a such a name is generated, the mail is not treated as list post.
 invalid_names = ["users", "mailman"]
 
 
@@ -67,24 +67,29 @@ for h in headers + known_headers.keys():
     if listname != None:
         break
 
+# Use the regexp to extract the listname from the header, if found.
 if h in known_headers and listname != None:
     try:
         listname = re.match(known_headers[h], listname).groups()[0]
     except AttributeError:
         listname = None
 
-# No header found or listname is invalid, Exit.
-if listname == None or listname in invalid_names:
+# No header found, Exit.
+if listname == None:
     sys.stdout.write(msg.as_string())
     sys.exit(0)
 
 listname = email.utils.parseaddr(listname)[1]
 foldername = get_foldername(listname)
 
+# Foldername is invalid, Exit.
+if foldername in invalid_names:
+    sys.stdout.write(msg.as_string())
+    sys.exit(0)
+
 # Some logging
 # f = open("detect_maillist.log", "a")
 # f.write(listname + " => " + foldername + "\n")
-
 
 # Create dir using maildirmake, if not existing
 if not os.path.isdir(os.path.join(MDIR, "." + foldername)):
