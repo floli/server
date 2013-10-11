@@ -70,7 +70,7 @@ for h in known_headers.keys() + headers:
 # Use the regexp to extract the listname from the header, if found.
 if h in known_headers and listname != None:
     try:
-        listname = re.match(known_headers[h], listname).groups()[0]
+        listname = re.search(known_headers[h], listname).groups()[0]
     except AttributeError:
         listname = None
 
