@@ -10,4 +10,6 @@ do
     [ -f $dir/STOP_SYNC ] || echo "rsync -av --delete root@serpent.de:/home/$dir /home/"
 done
 
+echo `date` > LAST_SYNC
+
 rm sync_lock
