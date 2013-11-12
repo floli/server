@@ -38,6 +38,7 @@ class DB:
                 ret = cursor.execute(sql)
             resultSet = cursor.fetchall()
             cursor.close()
+            self.conn.commit() # A transaction is implicitly started, so we need to finish it.
             return ret, resultSet        
         
         except MySQLdb.IntegrityError, error:
