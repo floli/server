@@ -21,7 +21,7 @@ if ($ADR eq "mailinglists@centershock.net")
 """
 
 # Base Maildir in which the subfolders are created, relative to your HOME.
-MDIR = "Mail/mailinglists@centershock.net"
+MDIR = "Mail/mailinglists@xgm.de"
 
 # Dictionary of listname => folder mappings. Can be used to overwrite the heuristic.
 known_lists = {
