@@ -5,9 +5,10 @@
 cd /home
 touch sync_lock
 
-for dir in $(ls -1 .)
+for dir in $(ls -1d */)
 do
-    [ -f $dir/STOP_SYNC ] || echo "rsync -av --delete root@serpent.de:/home/$dir /home/"
+    dir=`echo "$dir" | sed s+/++`  # Get rid of the trailing slash.
+    [ -f $dir/STOP_SYNC ] || rsync -av --delete root@serpent.de:/home/$dir /home/
 done
 
 echo `date` > LAST_SYNC
