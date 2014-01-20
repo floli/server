@@ -26,6 +26,7 @@ MDIR = "Mail/mailinglists@xgm.de"
 # Dictionary of listname => folder mappings. Can be used to overwrite the heuristic.
 known_lists = {
     "users@spamassassin.apache.org" : "spamassassin",
+    "users@lists.roundcube.net" : "roundcube",
 }
 
 # Dictionary of headers that need special treatment for listname extraction
