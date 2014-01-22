@@ -3,7 +3,6 @@
 
 # TODO
 # - Change config dir to ~/.config/flofiy/
-# - X-Flofify-Probability: Class, Prob
 
 import codecs
 import locale
@@ -12,7 +11,7 @@ import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.naive_bayes import MultinomialNB
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, UnicodeDammit
 
 def norm_path(*parts):
     """ Returns the normalized, absolute, expanded and joint path, assembled of all parts. """
@@ -171,25 +170,26 @@ def main():
         model.save(args.model, args.vocabulary)
     else:
         # istream = codecs.getreader('utf-8')(sys.stdin)
-        istream = codecs.StreamReader(sys.stdin, errors = "replace")
+        # istream = codecs.StreamReader(sys.stdin, errors = "replace")
         # mail = inData.read()
         # mail = sys.stdin.read()
         # sys.stdin = codecs.getreader('utf-8')(sys.stdin.detach())
         # sys.stdout = codecs.getwriter('utf-8')(sys.stdout.detach())
         # mail = sys.stdin.read()
-
+        mail = UnicodeDammit(sys.stdin.detach().read())
+        log("original_encoding: " + str(mail.original_encoding))
         # mail = open("testmail").read()
-        msg = email.message_from_file(istream)
-        if msg:
+        if mail:
+            log("Got mail from stdin.")
             model.load(args.model, args.vocabulary)
-            classification = model.classify(msg.as_string())
-            # msg = email.message_from_string(mail)
+            classification = model.classify(mail.unicode_markup)
+            msg = email.message_from_string(mail.unicode_markup)
             msg["X-Flofify-Class"] = str(classification[0])
             msg["X-Flofify-Probability"] = str(round(classification[1], 4)) + ", " + str(classification[2])
             sys.stdout.write(msg.as_string())
             sys.exit(0)
         else:
-            sys.stdout.write(msg.as_string)
+            sys.stdout.write(mail.unicode_markup)
             sys.exit(0)
 
 
