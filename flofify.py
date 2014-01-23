@@ -4,9 +4,8 @@
 # TODO
 # - Change config dir to ~/.config/flofiy/
 
-import codecs
 import locale
-import argparse, configparser, email, glob, hashlib, os, pickle, re, sys
+import argparse, configparser, email, glob, os, pickle, re, sys
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
@@ -169,16 +168,8 @@ def main():
         model.train()
         model.save(args.model, args.vocabulary)
     else:
-        # istream = codecs.getreader('utf-8')(sys.stdin)
-        # istream = codecs.StreamReader(sys.stdin, errors = "replace")
-        # mail = inData.read()
-        # mail = sys.stdin.read()
-        # sys.stdin = codecs.getreader('utf-8')(sys.stdin.detach())
-        # sys.stdout = codecs.getwriter('utf-8')(sys.stdout.detach())
-        # mail = sys.stdin.read()
         mail = UnicodeDammit(sys.stdin.detach().read())
         log("original_encoding: " + str(mail.original_encoding))
-        # mail = open("testmail").read()
         if mail:
             log("Got mail from stdin.")
             model.load(args.model, args.vocabulary)
