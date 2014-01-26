@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import locale
 import argparse, configparser, email, glob, os, pickle, re, sys
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
