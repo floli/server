@@ -1,9 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-# TODO
-# - Change config dir to ~/.config/flofiy/
-
 import locale
 import argparse, configparser, email, glob, os, pickle, re, sys
 import numpy as np
@@ -12,14 +9,13 @@ from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.naive_bayes import MultinomialNB
 from bs4 import BeautifulSoup, UnicodeDammit
 
-def norm_path(*parts):
-    """ Returns the normalized, absolute, expanded and joint path, assembled of all parts. """
-    parts = [ str(p) for p in parts ] 
-    return os.path.abspath(os.path.expanduser(os.path.join(*parts)))
+import common
+from common import XDG_CONFIG_HOME, XDG_DATA_HOME
+
 
 class NormPath(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
-        setattr(namespace, self.dest, norm_path(values))
+        setattr(namespace, self.dest, common.norm_path(values))
 
 
 def parse_args():
@@ -27,11 +23,11 @@ def parse_args():
     parser.add_argument("-r", "--rebuild", help="Forget all learned mails and rebuild.",
                         action="store_true")
     parser.add_argument("--config", help="Path to config file.",
-                        default = norm_path("~/.flofify/config"), action=NormPath)
+                        default = XDG_CONFIG_HOME("flofify", "config"), action=NormPath)
     parser.add_argument("--model", help="Model file to use.",
-                        default = norm_path("~/.flofify/model"), action=NormPath)
+                        default = XDG_DATA_HOME("flofify", "model"), action=NormPath)
     parser.add_argument("--vocabulary", help="Vocabulary file to use.",
-                        default = norm_path("~/.flofify/vocabulary"), action=NormPath)
+                        default = XDG_DATA_HOME("flofify", "vocabulary"), action=NormPath)
 
     return parser.parse_args()
 
@@ -111,6 +107,7 @@ class Model:
         self.vocabulary = pickle.load(voc)
         
     def mail_preprocessor(self, message):
+        """ Extracts the text. Combines body, From and Subject headers."""
         # Filter POPFile cruft by matching date string at the beginning.
         pop_reg = re.compile(r"^[0-9]{4}/[0-1][1-9]/[0-3]?[0-9]")
         message = [line for line in message.splitlines(True) if not pop_reg.match(line)]
@@ -124,7 +121,7 @@ class Model:
                 soup = BeautifulSoup(body)
                 msg_body += soup.get_text(" ", strip=True)
 
-
+        """ Ignore encrypted messages. """
         if "-----BEGIN PGP MESSAGE-----" in msg_body:
             msg_body = ""
 
@@ -148,20 +145,17 @@ class Configuration(configparser.ConfigParser):
         """ Needed for python 3 compatibility. """
         return dict(self.items(value))
 
-
-def log(message):
-    print(message, file=logfile)
-    
+        
 
 def main():
-
-
     args = parse_args()
+
+    common.mkpath(os.path.split(args.config)[0])
+    common.mkpath(os.path.split(args.model)[0])
+    common.mkpath(os.path.split(args.vocabulary)[0])
+    
     config = Configuration()
     config.read(args.config)
-
-    log("Preferred Encoding: " + locale.getpreferredencoding())
-    log("LANG: " + os.environ["LANG"])
 
     model = Model(config.buckets())
     if args.rebuild:
@@ -169,24 +163,18 @@ def main():
         model.save(args.model, args.vocabulary)
     else:
         mail = UnicodeDammit(sys.stdin.detach().read())
-        log("original_encoding: " + str(mail.original_encoding))
         if mail:
-            log("Got mail from stdin.")
             model.load(args.model, args.vocabulary)
             classification = model.classify(mail.unicode_markup)
             msg = email.message_from_string(mail.unicode_markup)
             msg["X-Flofify-Class"] = str(classification[0])
             msg["X-Flofify-Probability"] = str(round(classification[1], 4)) + ", " + str(classification[2])
             sys.stdout.write(msg.as_string())
-            sys.exit(0)
         else:
             sys.stdout.write(mail.unicode_markup)
-            sys.exit(0)
 
 
-        
-logfile = open("flofify.log", "a")
+
 
 if __name__ == "__main__":
     main()
-    
