@@ -1,7 +1,8 @@
 #!/usr/bin/env python2
 
 from optparse import OptionParser
-import sys
+from subprocess import check_output, Popen, PIPE
+import os, sys
 import MySQLdb
 import common
 
@@ -24,10 +25,11 @@ def main():
         
     check_login(options.login)
     
-    prepare_login_data(account_type, options)
+    prepare_login_data(options)
     
     if action == "add":
         process_dir(options)
+        hash_pwd(options)
      
     execute(action, account_type, options)
     print_success(action, account_type, options)
@@ -103,14 +105,11 @@ def check_login(login):
               
 
 
-def prepare_login_data(account_type, options):
-    """ Append the userid to the loginname and crypts the password for ftp accounts. """
-    import crypt
+def prepare_login_data(options):
+    """ Adds UID, GID, Home and system username to options. """
     options.username, options.uid, options.gid = common.get_system_userdata()
     options.home =  "/home/" + options.username   
-       
-    #if account_type == "ftp" and options.password:
-    #    options.password = crypt.crypt(options.password, options.login)
+
     
 def execute(action, account_type, options):
     """ Compiles the sql string for creation and deletion of accounts. """
@@ -155,11 +154,23 @@ def print_success(action, account_type, options):
     
 def process_dir(options):
     """ Checks if the given directory is under the homedir of the user and converts a relative path into a absolute one."""
-    import os
     options.directory = os.path.realpath(options.directory)
     if options.directory[:len(options.home)] != options.home:
         print "Directory must be under your home directory!"
         sys.exit(-1)
+
+def hash_pwd(options):
+    """ Hashes the password. """
+    if options.account_type = "mailbox":
+        pwd = check_output( ["/usr/bin/doveadm","pw","-s", "SSHA512", "-p", pwd] )
+    elif options.accoutn_type = "ftp":
+        proc = Popen( ["/usr/sbin/ftpasswd", "--hash", "--stdin"], stdout=PIPE, stdin=PIPE)
+        output, err = proc.communicate(pwd)
+        if proc.returncode != 0:
+            raise subprocess.CalledProcessError(proc.returncode, "ftpasswd", output)
+        pwd = output[10:] # Omit the 'ftpasswd: ' at the beginning
+    option.password = pwd.strip()
+    
         
 def proceed_with_listing(account_type):
     username, uid, gid = common.get_system_userdata()
@@ -169,8 +180,7 @@ def proceed_with_listing(account_type):
         sql = "SELECT login,dir FROM {FTP_TBL} WHERE `name` = %s"
     
     retVal, rows = DB.sql(sql, username)
-    
-    
+        
     print "Listing type: " + account_type
     print "Number of accounts: " + str(len(rows))
     print ""
@@ -181,7 +191,7 @@ def proceed_with_listing(account_type):
         print ""
         
     exit(0)
-    
-    
+
+
 if __name__ == "__main__":
     main()
