@@ -142,12 +142,12 @@ def moveFiles():
     os.chmod("/etc/cron.daily/rotate_and_report", 0o755)
 
     # Remove previous awstats files
-    files = glob.glob("/etc/awstats/awstats.*.*.conf")
-    for f in files: os.remove(f)
+    # files = glob.glob("/etc/awstats/awstats.*.*.conf")
+    # for f in files: os.remove(f)
 
-    filesToMove = glob.glob("awstats.*.*.conf")
-    for f in filesToMove:
-        move(f, "/etc/awstats/" + f)
+    # filesToMove = glob.glob("awstats.*.*.conf")
+    # for f in filesToMove:
+    #     move(f, "/etc/awstats/" + f)
 
 DB = common.DB()
 
@@ -159,7 +159,7 @@ def main():
     rebuildAliases()
     addDomainDirs() # Creates the directories in every users home
     rebuildAwstatsConfig()
-    # moveFiles()
+    moveFiles()
 
 
 if __name__ == "__main__":

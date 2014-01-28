@@ -6,9 +6,7 @@ $logs
   sharedscripts
   size 8M
   postrotate
-    if [ -f "`. /etc/apache2/envvars ; echo $${APACHE_PID_FILE:-/var/run/apache2.pid}`" ]; then
-      /etc/init.d/apache2 reload > /dev/null
-    fi
+    service apache2 reload > /dev/null
   endscript
 }
 

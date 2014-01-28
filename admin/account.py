@@ -13,9 +13,10 @@ def main():
     parser = setup_optparser()
     (options, args) = parser.parse_args()
     
-    check_args(args, parser) # Checks if the positional arguements are synatically correct
+    check_args(args, parser) # Checks if the positional arguments are syntactically correct
         
     account_type = args[0]
+    options.account_type = account_type
     action = args[1]
     
     check_options(action, options) # Checks if the options are syntactically correct, depending on action
@@ -132,7 +133,7 @@ def execute(action, account_type, options):
         if account_type == "mailbox":
             sql = "INSERT INTO {MAILBOX_TBL} (`name`, `login`, `home`, `maildir`, `uid`, `gid`, `password`) "
             sql += "VALUES (%s, %s, %s, %s, %s, %s, %s)" 
-            DB.sql(sql, options.username, options.login, options.home, options.directory, options.uid, options.gid, options.password)
+            DB.sql(sql, options.username, options.login, options.directory, options.directory, options.uid, options.gid, options.password)
             
         elif account_type == "ftp":
             sql = "INSERT INTO {FTP_TBL} (`name`, `login`, `password`, `uid`, `gid`, `dir`, `shell`)"
@@ -161,15 +162,15 @@ def process_dir(options):
 
 def hash_pwd(options):
     """ Hashes the password. """
-    if options.account_type = "mailbox":
-        pwd = check_output( ["/usr/bin/doveadm","pw","-s", "SSHA512", "-p", pwd] )
-    elif options.accoutn_type = "ftp":
+    if options.account_type == "mailbox":
+        pwd = check_output( ["/usr/bin/doveadm","pw","-s", "SSHA512", "-p", options.password] )
+    elif options.account_type == "ftp":
         proc = Popen( ["/usr/sbin/ftpasswd", "--hash", "--stdin"], stdout=PIPE, stdin=PIPE)
-        output, err = proc.communicate(pwd)
+        output, err = proc.communicate(options.password)
         if proc.returncode != 0:
             raise subprocess.CalledProcessError(proc.returncode, "ftpasswd", output)
         pwd = output[10:] # Omit the 'ftpasswd: ' at the beginning
-    option.password = pwd.strip()
+    options.password = pwd.strip()
     
         
 def proceed_with_listing(account_type):
