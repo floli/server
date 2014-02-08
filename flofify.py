@@ -34,14 +34,16 @@ def parse_args():
 class Bucket():
     def __init__(self, name, **args):
         self.name = name
-        self.pattern = args["pattern"]
+        self.patterns = args["patterns"]
         self.min_probability = float(args["min_probability"])
         
     def __repr__(self):
         return self.name
-        
+
     def files(self):
-        fs = glob.glob(self.pattern)
+        fs = []
+        for pattern in self.patterns.split(":"):
+            fs += glob.glob(pattern)
         return fs
 
     def train_data(self):
