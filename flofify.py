@@ -139,7 +139,8 @@ class Model:
     
 class Configuration(configparser.ConfigParser):
     def buckets(self):
-        bs = [ Bucket(s, **self[s]) for s in self.sections()]
+        """ Returns a list of every config section that starts with "Bucket:", with the leading "Bucket:" cut out from the buckets name."""
+        bs = [ Bucket(s[7:], **self[s]) for s in self.sections() if s.startswith("Bucket:") ]
         return bs
 
     def __getitem__(self, value):
