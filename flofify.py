@@ -143,10 +143,8 @@ class Configuration(configparser.ConfigParser):
         bs = [ Bucket(s[7:], **self[s]) for s in self.sections() if s.startswith("Bucket:") ]
         return bs
 
-    def __getitem__(self, value):
-        """ Needed for python 3 compatibility. """
-        return dict(self.items(value))
-
+    def default_bucket(self):
+        return self["Global"].get("default_bucket", "None")
         
 
 def main():
@@ -169,7 +167,11 @@ def main():
             model.load(args.model, args.vocabulary)
             classification = model.classify(mail.unicode_markup)
             msg = email.message_from_string(mail.unicode_markup)
-            msg["X-Flofify-Class"] = str(classification[0])
+            if classification[0] == None:
+                msg["X-Flofify-Class"] = config.default_bucket()
+            else:
+                msg["X-Flofify-Class"] = str(classification[0])
+            
             msg["X-Flofify-Probability"] = str(round(classification[1], 4)) + ", " + str(classification[2])
             sys.stdout.write(msg.as_string())
         else:
