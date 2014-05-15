@@ -26,7 +26,7 @@ Bei Fragen oder Interesse einfach an root@centershock.net schreiben.
 
 Hardware
 --------
-Der Server ist ein virtueller Server der Firma Strato.
+Der Server ist ein virtueller Server.
 
 System Benutzer
 --------------
