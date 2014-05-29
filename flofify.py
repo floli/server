@@ -56,8 +56,9 @@ class Bucket():
 class Model:
     PICKLE_PROTOCOL = 2
 
-    def __init__(self, buckets):
+    def __init__(self, buckets, fields):
         self.buckets = buckets
+        self.fields = fields
 
     
     def train(self):
@@ -73,7 +74,9 @@ class Model:
         
         self.classifier.fit(X, y)
         self.vocabulary = vectorizer.vocabulary_
-        print("Learned from %s mails, %s buckets." % (data.shape[0], len(self.buckets))) 
+        print("Learned from %s mails." % data.shape[0])
+        print("Buckets: %s" % self.buckets)
+        print("Fields:  %s" % self.fields)
 
     def classify(self, text):
         """ Classsifies text, returns tuple (final class, probability, class). if probability is larger than min_probability then final class == class"""
@@ -113,24 +116,29 @@ class Model:
         pop_reg = re.compile(r"^[0-9]{4}/[0-1][1-9]/[0-3]?[0-9]")
         message = [line for line in message.splitlines(True) if not pop_reg.match(line)]
         msg = email.message_from_string("".join(message))
-
+        
         msg_body = ""
 
-        for part in msg.walk():
-            if part.get_content_type() in ["text/plain", "text/html"]:
-                body = part.get_payload(decode=True)
-                soup = BeautifulSoup(body)
-                msg_body += soup.get_text(" ", strip=True)
+        if "body" in self.fields:
+            for part in msg.walk():
+                if part.get_content_type() in ["text/plain", "text/html"]:
+                    body = part.get_payload(decode=True)
+                    soup = BeautifulSoup(body)
+                    msg_body += soup.get_text(" ", strip=True)
 
-        """ Ignore encrypted messages. """
-        if "-----BEGIN PGP MESSAGE-----" in msg_body:
-            msg_body = ""
+            """ Ignore encrypted messages. """
+            if "-----BEGIN PGP MESSAGE-----" in msg_body:
+                msg_body = ""
+                
+        if "from" in self.fields:
+            msg_body += " ".join(email.utils.parseaddr(msg["From"]))
 
-        msg_body += " ".join(email.utils.parseaddr(msg["From"]))
-        try:
-            msg_body += " " + msg["Subject"]
-        except TypeError: # Can't convert 'NoneType' object to str implicitly
-            pass
+        if "subject" in self.fields:
+            try:
+                msg_body += " " + msg["Subject"]
+            except TypeError: # Can't convert 'NoneType' object to str implicitly
+                pass
+                
         msg_body = msg_body.lower()
         return msg_body
 
@@ -145,7 +153,12 @@ class Configuration(configparser.ConfigParser):
 
     def default_bucket(self):
         return self["Global"].get("default_bucket", "None")
-        
+
+    def fields(self):
+        default_fields = "From Subject Body"    
+        f = self["Global"].get("fields", default_fields)
+        f = f.lower()
+        return [ i.strip() for i in f.split(" ") ]
 
 def main():
     args = parse_args()
@@ -157,7 +170,7 @@ def main():
     config = Configuration()
     config.read(args.config)
 
-    model = Model(config.buckets())
+    model = Model(config.buckets(), config.fields())
     if args.rebuild:
         model.train()
         model.save(args.model, args.vocabulary)
