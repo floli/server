@@ -40,6 +40,9 @@ class Bucket():
     def __repr__(self):
         return self.name
 
+    def __str__(self):
+        return "Bucket: %s, Size: %s elements" % (self.name, len(self.files()))    
+
     def files(self):
         fs = []
         for pattern in self.patterns.split(":"):
@@ -75,7 +78,8 @@ class Model:
         self.classifier.fit(X, y)
         self.vocabulary = vectorizer.vocabulary_
         print("Learned from %s mails." % data.shape[0])
-        print("Buckets: %s" % self.buckets)
+        for b in self.buckets:
+            print(b)
         print("Fields:  %s" % self.fields)
 
     def classify(self, text):
