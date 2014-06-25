@@ -34,7 +34,11 @@ Jedes Mitglied bekommt einen System Account in der Form erster Buchstabe vom Vor
 
 Cron
 ----
-Der Cron Daemon ermöglicht es, zeitgesteuert Aufgaben auszuführen.
+Der Cron Daemon ermöglicht es, zeitgesteuert Aufgaben auszuführen. Ebenso können durch den Cron Daemon Skripte beim Systemstart ausgeführt werden. Dazu einfach die Zeile
+
+`@reboot  /path/to/command`
+
+in die Crontab des Benutzers eintragen.
 
 Datenbank
 ---------
