@@ -36,6 +36,7 @@ class Bucket():
         self.name = name
         self.patterns = args["patterns"]
         self.min_probability = float(args["min_probability"])
+        self.max_age = args["max_age"] # Maximum age of messages that are learned form. datetime.timedelta object
         
     def __repr__(self):
         return self.name
@@ -44,13 +45,14 @@ class Bucket():
         return "Bucket: %s, Size: %s elements" % (self.name, len(self.files()))    
 
     def files(self):
+        """ Returns a list of files that matches the pattern set in constructor. """
         fs = []
         for pattern in self.patterns.split(":"):
             fs += glob.glob(pattern)
         return fs
 
     def train_data(self):
-        """ Returns a numpy array of shape (n, 3). ID in first row, filenames in second row."""
+        """ Returns a numpy array of shape (n, 2). ID (name of bucket) in first row, filenames in second row."""
         files = self.files()
         data = np.array( [[self.name]*len(files), files] )
         return data.transpose()
@@ -82,6 +84,7 @@ class Model:
             print(b)
         print("Fields:  %s" % self.fields)
 
+        
     def classify(self, text):
         """ Classsifies text, returns tuple (final class, probability, class). if probability is larger than min_probability then final class == class"""
         vectorizer = CountVectorizer(input="content", vocabulary=self.vocabulary, decode_error='replace', strip_accents='unicode',
@@ -95,10 +98,9 @@ class Model:
         if proba >= bucket.min_probability:
             return (c, proba, c)
         else:
-            return (None, proba, c)
+            return (None, proba, c)        
+
         
-
-
     def save(self, model_path, vocabulary_path):
         model = open(model_path, "wb")
         pickle.dump(self.classifier, model, self.PICKLE_PROTOCOL)
@@ -152,17 +154,35 @@ class Model:
 class Configuration(configparser.ConfigParser):
     def buckets(self):
         """ Returns a list of every config section that starts with "Bucket:", with the leading "Bucket:" cut out from the buckets name."""
-        bs = [ Bucket(s[7:], **self[s]) for s in self.sections() if s.startswith("Bucket:") ]
+
+        bs = []
+        for s in self.sections():
+            if s.startswith("Bucket:"):
+                name = s[7:]
+                min_prob = self.min_probability(s)
+                max_age = self.max_age(s)
+                bs.append(Bucket(name, patterns = self[s]["patterns"], min_probability = min_prob, max_age = max_age))
+            
         return bs
 
+    def min_probability(self, section):
+        return float(self[section]["min_probability"])
+                      
+    def max_age(self, section):
+        # datetime.strptime("Sat, 16 Aug 2014 16:26:14 +0400", "%a, %d %b %Y %H:%M:%S %z")    
+        return 0
+                    
     def default_bucket(self):
         return self["Global"].get("default_bucket", "None")
 
     def fields(self):
+        """ Get the fields that are to be taken into account. """    
         default_fields = "From Subject Body"    
         f = self["Global"].get("fields", default_fields)
         f = f.lower()
         return [ i.strip() for i in f.split(" ") ]
+
+        
 
 def main():
     args = parse_args()
