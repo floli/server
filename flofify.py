@@ -169,8 +169,12 @@ class Configuration(configparser.ConfigParser):
         return float(self[section]["min_probability"])
                       
     def max_age(self, section):
-        # datetime.strptime("Sat, 16 Aug 2014 16:26:14 +0400", "%a, %d %b %Y %H:%M:%S %z")    
-        return datetime.timedelta(days = self[section]["max_age"])
+        # datetime.strptime("Sat, 16 Aug 2014 16:26:14 +0400", "%a, %d %b %Y %H:%M:%S %z")
+        max_age = self[section].get("max_age", -1)
+        if max_age == -1:
+            return datetime.timedelta.max
+        else:
+            return datetime.timedelta(days = max_age)
                     
     def default_bucket(self):
         return self["Global"].get("default_bucket", "None")
