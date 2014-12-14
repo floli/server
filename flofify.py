@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import argparse, configparser, email, glob, os, pickle, re, sys
+import argparse, configparser, datetime, email, glob, os, pickle, re, sys
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
@@ -68,7 +68,7 @@ class Model:
     
     def train(self):
         vectorizer = CountVectorizer(input='filename', decode_error='replace', strip_accents='unicode',
-                                     preprocessor=self.mail_preprocessor, stop_words='english')
+                                     preprocessor=self.mail_preprocessor, stop_words='english', max_df = 0.8)
         transformer = TfidfTransformer()
         self.classifier = MultinomialNB()
 
@@ -153,7 +153,7 @@ class Model:
     
 class Configuration(configparser.ConfigParser):
     def buckets(self):
-        """ Returns a list of every config section that starts with "Bucket:", with the leading "Bucket:" cut out from the buckets name."""
+        """ Returns a list of buckets created from every config section that starts with "Bucket:", with the leading "Bucket:" cut out from the buckets name."""
 
         bs = []
         for s in self.sections():
@@ -170,7 +170,7 @@ class Configuration(configparser.ConfigParser):
                       
     def max_age(self, section):
         # datetime.strptime("Sat, 16 Aug 2014 16:26:14 +0400", "%a, %d %b %Y %H:%M:%S %z")    
-        return 0
+        return datetime.timedelta(days = self[section]["max_age"])
                     
     def default_bucket(self):
         return self["Global"].get("default_bucket", "None")
