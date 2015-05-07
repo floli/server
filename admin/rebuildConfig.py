@@ -149,10 +149,15 @@ def moveFiles():
     # for f in filesToMove:
     #     move(f, "/etc/awstats/" + f)
 
+import subprocess
+
+def restartServices():
+    """ Restart services to get the new config, at the moment this is only apache. """
+    subprocess.check_call("service apache2 restart", shell=True)
+
 DB = common.DB()
 
 def main():
-
     rebuildLogrotateConfig()
     rebuildApacheConfig()
     rebuildSSLPRoxy()
@@ -160,7 +165,7 @@ def main():
     addDomainDirs() # Creates the directories in every users home
     rebuildAwstatsConfig()
     moveFiles()
-
+    restartServices()
 
 if __name__ == "__main__":
     main()
