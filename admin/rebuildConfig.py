@@ -46,25 +46,48 @@ def rebuildAliases():
         sql = sql[:len(sql)-2]  # Remove the last kommata
         DB.sql(sql,  *args)
 
+def hasSSL(domain, user):
+    """ Returns if the SSL files are in place for a domain / user """
+    cert, key = SSLfiles(domain, user)
+    return os.path.isfile(cert) and os.path.isfile(key)
+
+def SSLfiles(domain, user)
+""" Returns (sslcertificate, sslkey) """
+    cert = os.path.join("home", user, domain, "ssl", domain + ".cert")
+    key  = os.path.join("home", user, domain, "ssl", domain + ".key")
+    return cert, key
         
 def rebuildApacheConfig():
-    """ Create the Apache config all domains where http=True. Adds aliases. """
+    """ Create the Apache config for all domains where http=True. Adds aliases. """
     retVal, resultSet = DB.sql("SELECT domain, user FROM {DOMAIN_TBL} WHERE http = TRUE")
     template = getTemplate("apache-config.template")
+    templateSSL = getTemplate("apache-config-ssl.template")
     
     output = ""
+    outputSSL = ""
     for row in resultSet:
         sql = "SELECT alias FROM {HTTP_ALIASES_TBL} WHERE domain = %s"
         retVal, aliases = DB.sql(sql, row[0])
         configAliases = ""
         for alias in aliases:
             configAliases += alias[0] + " *." + alias[0] + " "
-        output += template.substitute(domain = row[0], user = row[1], aliases = configAliases)
+
+        domain, user = row[0], row[1]
+        if hasSSL(row[0], row[1]):
+            cert, key = SSLfiles(domain, user])
+            outputSSL += templateSSL.substitute(domain = domain, user = user,
+                                                certfile = cert, keyfile = key,aliases = configAliases)
+            
+        output += template.substitute(domain = domain, user = user, aliases = configAliases)
         output += "\n\n"
     
     f = open("generated-vhosts", "w")
     f.write(output)
     f.close()
+
+    f = open("generated-vhosts-ssl", "w")
+    f.write(outputSSL)
+    f.close
     
 def rebuildSSLPRoxy():
     retVal, resultSet = DB.sql("SELECT domain FROM {DOMAIN_TBL} WHERE http = TRUE")
