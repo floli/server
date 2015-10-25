@@ -73,8 +73,6 @@ def rebuildApacheConfig():
             configAliases += alias[0] + " *." + alias[0] + " "
 
         domain, user = row[0], row[1]
-        if domain == "xgm.de":
-            import pdb; pdb.set_trace()
         if hasSSL(row[0], row[1]):
             cert, key = SSLfiles(domain, user)
             policyChecker.checkSSLKey(key, user)
@@ -179,7 +177,7 @@ import subprocess
 
 def restartServices():
     """ Restart services to get the new config, at the moment this is only apache. """
-    # subprocess.check_call("service apache2 restart", shell=True)
+    subprocess.check_call("service apache2 restart", shell=True)
 
 DB = common.DB()
 

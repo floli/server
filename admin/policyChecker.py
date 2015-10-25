@@ -2,7 +2,7 @@ import os, smtplib, socket, stat
 from email.mime.text import MIMEText
 
 def checkSSLKey(key, user):
-    """ Checks if the SSL key are correct. """
+    """ Checks if the SSL key are correct, sends email if not."""
     mode = os.stat(key).st_mode
     if (mode & stat.S_IRGRP) or (mode & stat.S_IROTH):
         os.chmod(key, stat.S_IRUSR | stat.S_IWUSR)
