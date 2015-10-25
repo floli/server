@@ -10,6 +10,6 @@
         php_admin_value upload_tmp_dir "/home/$user/$domain/tmp"
 
         SSLEngine On
-        SSLCertificateFile /home/kounity/kounity.de/ssl/$certfile
-        SSLCertificateKeyFile /home/kounity/kounity.de/ssl/$keyfile
+        SSLCertificateFile $certfile
+        SSLCertificateKeyFile $keyfile
 </VirtualHost>

@@ -1,4 +1,4 @@
-import common
+import common, policyChecker
 import os, pwd, glob
 
 from string import Template
@@ -51,10 +51,10 @@ def hasSSL(domain, user):
     cert, key = SSLfiles(domain, user)
     return os.path.isfile(cert) and os.path.isfile(key)
 
-def SSLfiles(domain, user)
-""" Returns (sslcertificate, sslkey) """
-    cert = os.path.join("home", user, domain, "ssl", domain + ".cert")
-    key  = os.path.join("home", user, domain, "ssl", domain + ".key")
+def SSLfiles(domain, user):
+    """ Returns (sslcertificate, sslkey) """
+    cert = os.path.join("/home", user, domain, "ssl", domain + ".cert")
+    key  = os.path.join("/home", user, domain, "ssl", domain + ".key")
     return cert, key
         
 def rebuildApacheConfig():
@@ -73,8 +73,11 @@ def rebuildApacheConfig():
             configAliases += alias[0] + " *." + alias[0] + " "
 
         domain, user = row[0], row[1]
+        if domain == "xgm.de":
+            import pdb; pdb.set_trace()
         if hasSSL(row[0], row[1]):
-            cert, key = SSLfiles(domain, user])
+            cert, key = SSLfiles(domain, user)
+            policyChecker.checkSSLKey(key, user)
             outputSSL += templateSSL.substitute(domain = domain, user = user,
                                                 certfile = cert, keyfile = key,aliases = configAliases)
             
@@ -136,9 +139,9 @@ def test_and_create(path, user):
          uid = pwd.getpwnam(user).pw_uid
          gid = pwd.getpwnam(user).pw_gid
          os.chown(path, uid, gid)
-         print "Created:", path
-         print "Username, UID, GID:", user, uid, gid
-         print ""
+         print("Created:", path)
+         print("Username, UID, GID:", user, uid, gid)
+         print("")
  
     
 def addDomainDirs():
@@ -176,7 +179,7 @@ import subprocess
 
 def restartServices():
     """ Restart services to get the new config, at the moment this is only apache. """
-    subprocess.check_call("service apache2 restart", shell=True)
+    # subprocess.check_call("service apache2 restart", shell=True)
 
 DB = common.DB()
 
