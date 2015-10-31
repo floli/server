@@ -48,7 +48,7 @@ account account_type action [options]
 """
     
     parser = OptionParser(usage=usage)
-    parser.add_option("-l", "--login", help="The login for the account. Your username will be appended to this value. In all caes without domain/username suffix.")
+    parser.add_option("-l", "--login", help="The login for the account, form of name@example.org, where name can be choosen freely and example.org must be one of your domains.")
     parser.add_option("-d", "--directory", help="The directory on which the account will point (relative to the current directory)")
     parser.add_option("-p", "--password", help="The password for the account")
     return parser
