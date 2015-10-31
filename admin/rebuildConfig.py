@@ -153,6 +153,7 @@ def addDomainDirs():
         test_and_create(path + "pub/", user)
         test_and_create(path + "log/", user)
         test_and_create(path + "tmp/", user)
+        test_and_create(path + "ssl/", user)
         if stats:
             test_and_create(path + "statistics/", user)
    
