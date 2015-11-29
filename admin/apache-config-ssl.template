@@ -12,4 +12,5 @@
         SSLEngine On
         SSLCertificateFile $certfile
         SSLCertificateKeyFile $keyfile
+	$chainfile
 </VirtualHost>

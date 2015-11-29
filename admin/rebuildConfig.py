@@ -48,14 +48,15 @@ def rebuildAliases():
 
 def hasSSL(domain, user):
     """ Returns if the SSL files are in place for a domain / user """
-    cert, key = SSLfiles(domain, user)
+    cert, key, chain = SSLfiles(domain, user)
     return os.path.isfile(cert) and os.path.isfile(key)
 
 def SSLfiles(domain, user):
-    """ Returns (sslcertificate, sslkey) """
-    cert = os.path.join("/home", user, domain, "ssl", domain + ".cert")
-    key  = os.path.join("/home", user, domain, "ssl", domain + ".key")
-    return cert, key
+    """ Returns (sslcertificate, sslkey, chain) """
+    cert   = os.path.join("/home", user, domain, "ssl", domain + ".cert")
+    key    = os.path.join("/home", user, domain, "ssl", domain + ".key")
+    chain  = os.path.join("/home", user, domain, "ssl/chain.pem")
+    return cert, key, chain
         
 def rebuildApacheConfig():
     """ Create the Apache config for all domains where http=True. Adds aliases. """
@@ -74,10 +75,12 @@ def rebuildApacheConfig():
 
         domain, user = row[0], row[1]
         if hasSSL(row[0], row[1]):
-            cert, key = SSLfiles(domain, user)
+            cert, key, chain = SSLfiles(domain, user)
+            chain_statement =  "SSLCertificateChainFile " + chain if os.path.isfile(chain) else ""
             policyChecker.checkSSLKey(key, user)
             outputSSL += templateSSL.substitute(domain = domain, user = user,
-                                                certfile = cert, keyfile = key,aliases = configAliases)
+                                                certfile = cert, keyfile = key,aliases = configAliases,
+                                                chainfile = chain_statement)
             
         output += template.substitute(domain = domain, user = user, aliases = configAliases)
         output += "\n\n"
@@ -161,6 +164,7 @@ from shutil import move
  
 def moveFiles():
     move("generated-vhosts", "/etc/apache2/sites-available/generated-vhosts")
+    move("generated-vhosts-ssl", "/etc/apache2/sites-available/generated-vhosts-ssl")
     move("generated-logrotate.conf", "/etc/logrotate.d/generated-logrotate.conf")
     move("sslproxy.conf", "/etc/apache2/sslproxy.conf")
     move("rotate_and_report", "/etc/cron.daily/rotate_and_report")
@@ -178,7 +182,7 @@ import subprocess
 
 def restartServices():
     """ Restart services to get the new config, at the moment this is only apache. """
-    subprocess.check_call("service apache2 restart", shell=True)
+    subprocess.check_call("service apache2 reload", shell=True)
 
 DB = common.DB()
 
