@@ -27,6 +27,7 @@ MDIR = "Mail/mailinglists@xgm.de"
 known_lists = {
     "users@spamassassin.apache.org" : "spamassassin",
     "users@lists.roundcube.net" : "roundcube",
+    "users@lists.claws-mail.org" : "claws",
 }
 
 # Dictionary of headers that need special treatment for listname extraction
