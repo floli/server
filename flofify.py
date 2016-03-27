@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import argparse, configparser, datetime, email, glob, os, pickle, re, sys
+import argparse, configparser, datetime, email, email.parser, glob, os, pickle, re, sys
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
@@ -49,11 +49,40 @@ class Bucket():
         fs = []
         for pattern in self.patterns.split(":"):
             fs += glob.glob(pattern)
-        return fs
+        print("Mails before filtering in bucket:", self.name, "Count:", len(fs))
+        filtered = [f for f in fs if self.check_age(f)]
+        print("Mails after filtering in bucket:", self.name, "Count:", len(filtered))
+        return filtered
+
+    def check_age(self, file):
+        # print("File:", file)
+        fp = open(file, "r")
+        try:
+            msg = email.parser.Parser().parse(fp, headersonly=True)
+            # msg = email.message_from_file(f)
+        except UnicodeDecodeError as e: 
+            print("Error reading file", file, "Ignoring file. Error is:")
+            print(e)
+            return False
+        # datetime.strptime("Sat, 16 Aug 2014 16:26:14 +0400", "%a, %d %b %Y %H:%M:%S %z")
+        datestr = msg.get_all("Received")[0].split(";")[-1].lstrip()
+        datestr = datestr[:31].strip() # Only pick string up to +0400, ignore a (CEST) if existing
+        try:
+            dtime = datetime.datetime.strptime(datestr, "%a, %d %b %Y %H:%M:%S %z")
+        except TypeError:
+            print("Error converting date in", file)
+            return False
+
+        if datetime.datetime.now(datetime.timezone.utc) - dtime > self.max_age:
+            return False
+        else:
+            return True
+        
 
     def train_data(self):
         """ Returns a numpy array of shape (n, 2). ID (name of bucket) in first row, filenames in second row."""
         files = self.files()
+        print("Got", len(files), "files for learning.")
         data = np.array( [[self.name]*len(files), files] )
         return data.transpose()
 
@@ -174,7 +203,7 @@ class Configuration(configparser.ConfigParser):
         if max_age == -1:
             return datetime.timedelta.max
         else:
-            return datetime.timedelta(days = max_age)
+            return datetime.timedelta(days = int(max_age))
                     
     def default_bucket(self):
         return self["Global"].get("default_bucket", "None")
