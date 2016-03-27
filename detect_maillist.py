@@ -28,6 +28,7 @@ known_lists = {
     "users@spamassassin.apache.org" : "spamassassin",
     "users@lists.roundcube.net" : "roundcube",
     "users@lists.claws-mail.org" : "claws",
+    "users@open-mpi.org" : "open-mpi",
 }
 
 # Dictionary of headers that need special treatment for listname extraction
