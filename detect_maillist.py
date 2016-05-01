@@ -29,6 +29,7 @@ known_lists = {
     "users@lists.roundcube.net" : "roundcube",
     "users@lists.claws-mail.org" : "claws",
     "users@open-mpi.org" : "open-mpi",
+    "users.httpd.apache.org" : "httpd-users",
 }
 
 # Dictionary of headers that need special treatment for listname extraction
@@ -40,7 +41,6 @@ known_headers = {
 # Names that are invalid for folders. 
 # If a target folder with a such a name is generated, the mail is not treated as list post.
 invalid_names = ["users", "mailman"]
-
 
 # Headers to get the listname from, in order.
 headers = ["X-Mailing-List", "List-Id", "List-ID"]
