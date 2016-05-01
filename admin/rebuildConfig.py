@@ -182,7 +182,15 @@ import subprocess
 
 def restartServices():
     """ Restart services to get the new config, at the moment this is only apache. """
-    subprocess.check_call("service apache2 reload", shell=True)
+    try:
+        subprocess.check_output("apachectl configtest", shell=True, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        body = "Error from apache2ctl configtest. Returncode was %i.\n\n" % e.returncode + e.output
+        common.mailRoot(body, "Error from apache2ctl configtest")
+        print(body)
+    else:
+        print("Restarting apache.")
+        subprocess.check_call("service apache2 reload", shell=True)
 
 DB = common.DB()
 
