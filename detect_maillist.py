@@ -29,7 +29,8 @@ known_lists = {
     "users@lists.roundcube.net" : "roundcube",
     "users@lists.claws-mail.org" : "claws",
     "users@open-mpi.org" : "open-mpi",
-    "users.httpd.apache.org" : "httpd-users",
+    "users@httpd.apache.org" : "httpd-users",
+    "users@lists.open-mpi.org" : "openmpi-users",
 }
 
 # Dictionary of headers that need special treatment for listname extraction
@@ -45,6 +46,10 @@ invalid_names = ["users", "mailman"]
 # Headers to get the listname from, in order.
 headers = ["X-Mailing-List", "List-Id", "List-ID"]
 
+# SKETCH
+regexps = [
+    ("List-Post", r"<mailto:(.*)>", "template string {}" )
+]
 
 def get_foldername(listname):
     """ Construct/guess a suitable foldername for a list. """
@@ -85,21 +90,22 @@ if listname == None:
 listname = email.utils.parseaddr(listname)[1]
 foldername = get_foldername(listname)
 
+# Some logging
+f = open("detect_maillist.log", "a")
+f.write(h + ":" + listname + " => " + foldername + "\n")
+
 # Foldername is invalid, Exit.
 if foldername in invalid_names:
     sys.stdout.write(msg.as_string())
     sys.exit(0)
 
-# Some logging
-# f = open("detect_maillist.log", "a")
-# f.write(listname + " => " + foldername + "\n")
 
 # Create dir using maildirmake, if not existing
 if not os.path.isdir(os.path.join(MDIR, "." + foldername)):
     subprocess.Popen( ["maildirmake", "-f", foldername, MDIR] )
     # f.write("Created Dir: " + foldername + "\n")
 
-# f.close()
+f.close()
 
 # This is for maildrop or another MDA.
 msg["X-Target-Folder"] = foldername
