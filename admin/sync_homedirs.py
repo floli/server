@@ -2,7 +2,7 @@
 
 """ Syncs the home dirs as long as there is no STOP_SYNC file present. """
 
-import os, subprocess, sys
+import datetime, os, subprocess, sys
 from pathlib import Path
 
 EXCLUDE = ["ftp", "backup"]
@@ -22,7 +22,8 @@ for path in Path(".").iterdir():
         cmd = "rsync -avz --delete root@astarte.centershock.net:/home/{dir}/ /home/{dir}".format(dir = path)
         print(cmd)
         subprocess.check_call(cmd, shell=True)
+        with (path / "LAST_SYNC").open("w") as f:
+            f.write(datetime.datetime.now().isoformat(sep = " ") + "\n")
+
 
 lock.unlink()
-
-        
