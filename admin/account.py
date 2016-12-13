@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 from optparse import OptionParser
 from subprocess import check_output, Popen, PIPE
@@ -61,11 +61,11 @@ def check_args(args, parser):
         sys.exit(1)
 
     if args[0] not in ["ftp", "mailbox"]:
-        print "First argument must be either 'ftp' or 'mailbox'."
+        print("First argument must be either 'ftp' or 'mailbox'.")
         sys.exit(1)
         
     if args[1] not in ["add", "del", "list"]:
-        print "Second argument must be either 'add', 'del' or 'list'."
+        print("Second argument must be either 'add', 'del' or 'list'.")
         sys.exit(1)
         
  
@@ -73,18 +73,18 @@ def check_options(action, options):
     """ Check if all required options are giving. Depends on the selected action. """
     if action == "add":
         if not (options.login and options.directory and options.password):
-            print "Not all required options have been given!"
+            print("Not all required options have been given!")
             sys.exit(1)
     elif action == "del":
         if not (options.login):
-            print "Not all required options have been given!"
+            print("Not all required options have been given!")
             sys.exit(1)
             
 def check_login(login):
     """ login always need to have the form name@domain.tld. domain.tld also need to be in the table of domains for the local user name. Both is checked here. """
     splitted = login.split("@")
     if len(splitted) != 2:
-        print "There is something wrong with the login you have supplied. """
+        print("There is something wrong with the login you have supplied. """)
         exit(-1)
     else:
         domain = splitted[1]
@@ -101,7 +101,7 @@ def check_login(login):
     retVal, resultSet = DB.sql(sql, username, username)
     
     if not domain in [i[0] for i in resultSet] :
-        print "You are not allowed to manage accounts for the domain " + domain + "!"
+        print("You are not allowed to manage accounts for the domain " + domain + "!")
         exit(-1)        
               
 
@@ -126,7 +126,7 @@ def execute(action, account_type, options):
             sql = "DELETE FROM {FTP_TBL} WHERE `login` = %s"
             
         if not DB.sql(sql, options.login)[0]:
-            print "No account has been deleted!"
+            print("No account has been deleted!")
             exit(-1)
         
     elif action == "add":
@@ -145,19 +145,19 @@ def execute(action, account_type, options):
    
 def print_success(action, account_type, options):
     """ Prints information after a successfull creation of a account. """    
-    print "Success"
-    print "action: " + action
-    print "account type: " + account_type
-    print "login: " + options.login
+    print("Success")
+    print("action:          " + action)
+    print("account type:    " + account_type)
+    print("login:           " + options.login)
     if action == "add":
-        print "target directory: " + options.directory
+        print("target directory: " + options.directory)
         
     
 def process_dir(options):
     """ Checks if the given directory is under the homedir of the user and converts a relative path into a absolute one."""
     options.directory = os.path.realpath(options.directory)
     if options.directory[:len(options.home)] != options.home:
-        print "Directory must be under your home directory!"
+        print("Directory must be under your home directory!")
         sys.exit(-1)
 
 def hash_pwd(options):
@@ -182,14 +182,14 @@ def proceed_with_listing(account_type):
     
     retVal, rows = DB.sql(sql, username)
         
-    print "Listing type: " + account_type
-    print "Number of accounts: " + str(len(rows))
-    print ""
+    print("Listing type:       " + account_type)
+    print("Number of accounts: " + str(len(rows)))
+    print("")
 
     for account in rows:
-        print "Login: " + account[0]
-        print "Target directory: " + account[1]
-        print ""
+        print("Login:            " + account[0])
+        print("Target directory: " + account[1])
+        print("")
         
     exit(0)
 
