@@ -108,19 +108,20 @@ def rebuildLogrotateConfig():
 
     
 def rebuildAwstatsConfig():
-    buildCommand = ""
+    build_command = ""
     retVal, resultSet = DB.sql("SELECT domain, user FROM {DOMAIN_TBL} WHERE http_statistics = TRUE")
     for row in resultSet:
         domain, user = row[0], row[1]
         retVal, alResult = DB.sql("SELECT alias FROM {HTTP_ALIASES_TBL} WHERE domain = %s", domain)
         aliasesList = [n[0] for n in alResult]
         aliases = " ".join(aliasesList)
-        writeTemplate("awstats-config.template", "awstats." + domain + ".conf", domain = domain, user = user, aliases = aliases)
-        build = '/opt/awstats-6.95/tools/awstats_buildstaticpages.pl -config="%s" -lang="de" -dir="/home/%s/%s/statistics/" -awstatsprog="/opt/awstats-6.95/wwwroot/cgi-bin/awstats.pl"'
-        buildCommand += "\n" + build % (domain, user, domain)
-        build = 'mv "/home/%s/%s/statistics/awstats.%s.html" "/home/%s/%s/statistics/index.html"' % (user, domain, domain, user, domain)
-        buildCommand += "\n" + build
-    writeTemplate("templates/rotate_and_report.template", "output/rotate_and_report", build_command = buildCommand)
+        writeTemplate("templates/awstats-config.template", "output/awstats." + domain + ".conf", domain = domain, user = user, aliases = aliases)
+#        build = '/usr/share/awstats/tools/awstats_buildstaticpages.pl -config="%s" -lang="de" -dir="/home/%s/%s/statistics/" -awstatsprog="/opt/awstats-6.95/wwwroot/cgi-bin/awstats.pl"'
+        build_command += '/usr/share/awstats/tools/awstats_buildstaticpages.pl -config="{domain}" -lang="de" -dir="/home/{user}/{domain}/statistics/" \n'
+        build_command += 'mv "/home/{user}/{domain}/statistics/awstats.{domain}.xml" "/home/{user}/{domain}/statistics/index.html" \n \n'
+        build_command = build_command.format(user = user, domain = domain)
+        
+    writeTemplate("templates/awstats-build.sh.template", "output/awstats-build.sh", build_command = build_command)
         
 
 def test_and_create(path, user):
@@ -153,19 +154,19 @@ def addDomainDirs():
 from shutil import move
  
 def moveFiles():
-    move("output/generated-vhosts.conf", "/etc/apache2/sites-available/generated-vhosts")
-    move("output/generated-vhosts-ssl.conf", "/etc/apache2/sites-available/generated-vhosts-ssl")
+    move("output/generated-vhosts.conf", "/etc/apache2/sites-available/generated-vhosts.conf")
+    move("output/generated-vhosts-ssl.conf", "/etc/apache2/sites-available/generated-vhosts-ssl.conf")
     move("output/generated-logrotate.conf", "/etc/logrotate.d/generated-logrotate.conf") 
-    # move("rotate_and_report", "/etc/cron.daily/rotate_and_report")
-    # os.chmod("/etc/cron.daily/rotate_and_report", 0o755)
+    move("output/awstats-build.sh", "/usr/local/bin/awstats-build.sh")
+    Path("/usr/local/bin/awstats-build.sh").chmod(0o755)
 
     # Remove previous awstats files
-    # files = glob.glob("/etc/awstats/awstats.*.*.conf")
-    # for f in files: os.remove(f)
+    awstats_dir = Path("/etc/awstats/")
+    for f in awstats_dir.glob("awstats.*.*.conf"):
+        f.unlink()
 
-    # filesToMove = glob.glob("awstats.*.*.conf")
-    # for f in filesToMove:
-    #     move(f, "/etc/awstats/" + f)
+    for f in Path("./output").glob("awstats.*.*.conf"):
+        f.rename(awstats_dir / f.name)
 
 import subprocess
 
@@ -188,7 +189,7 @@ def main():
     rebuildApacheConfig()
     rebuildAliases()
     addDomainDirs() # Creates the directories in every users home
-    # rebuildAwstatsConfig()
+    rebuildAwstatsConfig()
     moveFiles()
     restartServices()
 

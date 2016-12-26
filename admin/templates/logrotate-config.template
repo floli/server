@@ -4,7 +4,8 @@ $logs
   missingok
   delaycompress
   sharedscripts
-  size 8M
+  size 10M
+  
   postrotate
     systemctl try-reload-or-restart apache2
   endscript

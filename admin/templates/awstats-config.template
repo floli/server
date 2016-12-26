@@ -1,4 +1,6 @@
+Include "/etc/awstats/awstats.conf"
+
 LogFile="/home/$user/$domain/log/access.log"
 SiteDomain="$domain"
 HostAliases="$aliases"
-Include "/etc/awstats/awstats.conf.local"
+
