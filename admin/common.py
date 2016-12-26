@@ -1,5 +1,5 @@
 import MySQLdb
-import ConfigParser, os, sys
+import configparser, os, sys
 
 DOMAIN_TBL = "domains"
 VIRTUAL_TBL = "virtual_aliases"
@@ -15,7 +15,7 @@ ADMIN_ALIASES = ["hostmaster", "postmaster", "newsmaster", "mailmaster", "abuse"
 
 class DB:
     def __init__(self):
-        config = ConfigParser.SafeConfigParser()
+        config = configparser.SafeConfigParser()
         config.read(os.path.join(os.path.dirname(sys.argv[0]), "configuration"))
         DB_USER = config.get("CREDENTIALS", "DB_USER")
         DB_PASSWD = config.get("CREDENTIALS", "DB_PASSWD")
@@ -41,13 +41,13 @@ class DB:
             self.conn.commit() # A transaction is implicitly started, so we need to finish it.
             return ret, resultSet        
         
-        except MySQLdb.IntegrityError, error:
-            print "A database integrity error has occured. Maybe you try to add an already existing entry?"
-            print "The exception message is:", error[1]
+        except MySQLdb.IntegrityError as error:
+            print("A database integrity error has occured. Maybe you try to add an already existing entry?")
+            print("The exception message is:", error[1])
             sys.exit(-1)
-        except Exception, error:
-            print "Some unhandled error has occured. Please contact root and describe what you were trying to do and add the following message."
-            print error
+        except Exception as error:
+            print("Some unhandled error has occured. Please contact root and describe what you were trying to do and add the following message.")
+            print(error)
             sys.exit(-1)
 
 

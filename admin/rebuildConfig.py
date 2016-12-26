@@ -1,7 +1,10 @@
+#!/usr/bin/env python3
+
 import common, policyChecker
 import os, pwd, glob
 
 from string import Template
+from pathlib import Path
 
    
 def addAliases(domainname):
@@ -13,20 +16,21 @@ def addAliases(domainname):
         args.append(name + "@" + domainname)
     sql = sql[:len(sql)-2]  # Remove the last kommata
     DB.sql(sql,  *args)
+
     
 def getTemplate(file):
-    f = open(file, "r")
-    templateStr = f.read()
-    f.close()
+    with open(file, "r") as f:
+        templateStr = f.read()
     return Template(templateStr)
+
 
 def writeTemplate(inputTemplate, outputFile, **templateArgs):
     template = getTemplate(inputTemplate)
     output = template.substitute(templateArgs)
-    f = open(outputFile, "w")
-    f.write(output)
-    f.close()
-    
+    with open(outputFile, "w") as f:
+        f.write(output)
+
+        
 def rebuildAliases():
     """ Deletes all ALIASES and rebuilds them based on the entries from DOMAIN_TABLE. """
     for name in common.ADMIN_ALIASES:
@@ -46,23 +50,25 @@ def rebuildAliases():
         sql = sql[:len(sql)-2]  # Remove the last kommata
         DB.sql(sql,  *args)
 
+        
 def hasSSL(domain, user):
     """ Returns if the SSL files are in place for a domain / user """
-    cert, key, chain = SSLfiles(domain, user)
-    return os.path.isfile(cert) and os.path.isfile(key)
+    cert, key = SSLfiles(domain, user)
+    return cert.is_file() and key.is_file()
+
 
 def SSLfiles(domain, user):
     """ Returns (sslcertificate, sslkey, chain) """
-    cert   = os.path.join("/home", user, domain, "ssl", domain + ".cert")
-    key    = os.path.join("/home", user, domain, "ssl", domain + ".key")
-    chain  = os.path.join("/home", user, domain, "ssl/chain.pem")
-    return cert, key, chain
-        
+    cert   = Path("/home", user, domain, "ssl", domain + ".cert")
+    key    = Path("/home", user, domain, "ssl", domain + ".key")
+    return cert, key
+
+
 def rebuildApacheConfig():
     """ Create the Apache config for all domains where http=True. Adds aliases. """
     retVal, resultSet = DB.sql("SELECT domain, user FROM {DOMAIN_TBL} WHERE http = TRUE")
-    template = getTemplate("apache-config.template")
-    templateSSL = getTemplate("apache-config-ssl.template")
+    template = getTemplate("templates/apache-config.template")
+    templateSSL = getTemplate("templates/apache-config-ssl.template")
     
     output = ""
     outputSSL = ""
@@ -75,36 +81,21 @@ def rebuildApacheConfig():
 
         domain, user = row[0], row[1]
         if hasSSL(row[0], row[1]):
-            cert, key, chain = SSLfiles(domain, user)
-            chain_statement =  "SSLCertificateChainFile " + chain if os.path.isfile(chain) else ""
+            cert, key = SSLfiles(domain, user)
             policyChecker.checkSSLKey(key, user)
             outputSSL += templateSSL.substitute(domain = domain, user = user,
-                                                certfile = cert, keyfile = key,aliases = configAliases,
-                                                chainfile = chain_statement)
+                                                certfile = cert, keyfile = key, aliases = configAliases)
+            outputSSL += "\n\n"
             
         output += template.substitute(domain = domain, user = user, aliases = configAliases)
         output += "\n\n"
     
-    f = open("generated-vhosts", "w")
-    f.write(output)
-    f.close()
+    with open("output/generated-vhosts.conf", "w") as f:
+        f.write(output)
 
-    f = open("generated-vhosts-ssl", "w")
-    f.write(outputSSL)
-    f.close
-    
-def rebuildSSLPRoxy():
-    retVal, resultSet = DB.sql("SELECT domain FROM {DOMAIN_TBL} WHERE http = TRUE")
-    template = getTemplate("sslproxy-config.template")
-    
-    output = ""
-    for row in resultSet:
-        output += template.substitute(domain = row[0])
-        output += "\n"
+    with open("output/generated-vhosts-ssl.conf", "w") as f:
+        f.write(outputSSL)
 
-    f = open("sslproxy.conf", "w")
-    f.write(output)
-    f.close()
     
 def rebuildLogrotateConfig():
     retVal, resultSet = DB.sql("SELECT domain, user FROM {DOMAIN_TBL} WHERE http = TRUE")
@@ -113,8 +104,7 @@ def rebuildLogrotateConfig():
         logs += "/home/%s/%s/log/access.log \n" % (row[1], row[0])
         logs += "/home/%s/%s/log/error.log \n" % (row[1], row[0])
 
-    writeTemplate("logrotate-config.template", "generated-logrotate.conf", logs = logs.rstrip())
-    
+    writeTemplate("templates/logrotate-config.template", "output/generated-logrotate.conf", logs = logs.rstrip())
 
     
 def rebuildAwstatsConfig():
@@ -130,7 +120,7 @@ def rebuildAwstatsConfig():
         buildCommand += "\n" + build % (domain, user, domain)
         build = 'mv "/home/%s/%s/statistics/awstats.%s.html" "/home/%s/%s/statistics/index.html"' % (user, domain, domain, user, domain)
         buildCommand += "\n" + build
-    writeTemplate("rotate_and_report.template", "rotate_and_report", build_command = buildCommand)
+    writeTemplate("templates/rotate_and_report.template", "output/rotate_and_report", build_command = buildCommand)
         
 
 def test_and_create(path, user):
@@ -163,12 +153,11 @@ def addDomainDirs():
 from shutil import move
  
 def moveFiles():
-    move("generated-vhosts", "/etc/apache2/sites-available/generated-vhosts")
-    move("generated-vhosts-ssl", "/etc/apache2/sites-available/generated-vhosts-ssl")
-    move("generated-logrotate.conf", "/etc/logrotate.d/generated-logrotate.conf")
-    move("sslproxy.conf", "/etc/apache2/sslproxy.conf")
-    move("rotate_and_report", "/etc/cron.daily/rotate_and_report")
-    os.chmod("/etc/cron.daily/rotate_and_report", 0o755)
+    move("output/generated-vhosts.conf", "/etc/apache2/sites-available/generated-vhosts")
+    move("output/generated-vhosts-ssl.conf", "/etc/apache2/sites-available/generated-vhosts-ssl")
+    move("output/generated-logrotate.conf", "/etc/logrotate.d/generated-logrotate.conf") 
+    # move("rotate_and_report", "/etc/cron.daily/rotate_and_report")
+    # os.chmod("/etc/cron.daily/rotate_and_report", 0o755)
 
     # Remove previous awstats files
     # files = glob.glob("/etc/awstats/awstats.*.*.conf")
@@ -182,17 +171,24 @@ import subprocess
 
 def restartServices():
     """ Restart services to get the new config, at the moment this is only apache. """
-    subprocess.check_call("service apache2 reload", shell=True)
+    try:
+        subprocess.check_output("apachectl configtest", shell=True, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        body = "Error from apache2ctl configtest. Returncode was %i.\n\n" % e.returncode + e.output
+        common.mailRoot(body, "Error from apache2ctl configtest")
+        print(body)
+    else:
+        print("Restarting apache.")
+        subprocess.check_call("systemctl try-reload-or-restart apache2", shell=True)
 
 DB = common.DB()
 
 def main():
     rebuildLogrotateConfig()
     rebuildApacheConfig()
-    rebuildSSLPRoxy()
     rebuildAliases()
     addDomainDirs() # Creates the directories in every users home
-    rebuildAwstatsConfig()
+    # rebuildAwstatsConfig()
     moveFiles()
     restartServices()
 

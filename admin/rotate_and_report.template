@@ -1,8 +1,0 @@
-#!/bin/sh
-
-/opt/awstats-6.95/tools/awstats_updateall.pl now -awstatsprog=/opt/awstats-6.95/wwwroot/cgi-bin/awstats.pl
-
-test -x /usr/sbin/logrotate || exit 0
-/usr/sbin/logrotate /etc/logrotate.conf
-
-$build_command

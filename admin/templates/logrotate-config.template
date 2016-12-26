@@ -6,7 +6,7 @@ $logs
   sharedscripts
   size 8M
   postrotate
-    service apache2 reload > /dev/null
+    systemctl try-reload-or-restart apache2
   endscript
 }
 
