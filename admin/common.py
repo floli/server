@@ -6,8 +6,8 @@ VIRTUAL_TBL = "virtual_aliases"
 MAILBOX_TBL = "mailboxes"
 FTP_TBL = "ftp" 
 
-# Table that contains further HTTP aliases for a domain
-HTTP_ALIASES_TBL = "http_aliases"
+# Table that contains further aliases for a domain
+DOMAIN_ALIASES_TBL = "domain_aliases"
 
 # Reserved aliases that get forwarded to root
 ADMIN_ALIASES = ["hostmaster", "postmaster", "newsmaster", "mailmaster", "abuse"]
@@ -24,7 +24,7 @@ class DB:
 
     def replDBinfo(self, s):
         return s.format(DOMAIN_TBL=DOMAIN_TBL,
-                        VIRTUAL_TBL=VIRTUAL_TBL, HTTP_ALIASES_TBL=HTTP_ALIASES_TBL,
+                        VIRTUAL_TBL=VIRTUAL_TBL, DOMAIN_ALIASES_TBL=DOMAIN_ALIASES_TBL,
                         MAILBOX_TBL=MAILBOX_TBL, FTP_TBL=FTP_TBL)
 
         

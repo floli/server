@@ -73,7 +73,7 @@ def rebuildApacheConfig():
     output = ""
     outputSSL = ""
     for row in resultSet:
-        sql = "SELECT alias FROM {HTTP_ALIASES_TBL} WHERE domain = %s"
+        sql = "SELECT alias FROM {DOMAIN_ALIASES_TBL} WHERE domain = %s"
         retVal, aliases = DB.sql(sql, row[0])
         configAliases = ""
         for alias in aliases:
@@ -112,7 +112,7 @@ def rebuildAwstatsConfig():
     retVal, resultSet = DB.sql("SELECT domain, user FROM {DOMAIN_TBL} WHERE http_statistics = TRUE")
     for row in resultSet:
         domain, user = row[0], row[1]
-        retVal, alResult = DB.sql("SELECT alias FROM {HTTP_ALIASES_TBL} WHERE domain = %s", domain)
+        retVal, alResult = DB.sql("SELECT alias FROM {DOMAIN_ALIASES_TBL} WHERE domain = %s", domain)
         aliasesList = [n[0] for n in alResult]
         aliases = " ".join(aliasesList)
         writeTemplate("templates/awstats-config.template", "output/awstats." + domain + ".conf", domain = domain, user = user, aliases = aliases)

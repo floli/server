@@ -14,7 +14,7 @@ def print_usage_and_exit():
 def get_allowed_domains(username):
     """ Returns a list of domains the local user is allowed to add addresses for. """
 
-    sql = "SELECT domain FROM {DOMAIN_TBL} WHERE mail AND user = %s UNION SELECT alias FROM {HTTP_ALIASES_TBL} WHERE domain IN (SELECT domain FROM {DOMAIN_TBL} WHERE mail AND user = %s)"
+    sql = "SELECT domain FROM {DOMAIN_TBL} WHERE mail AND user = %s UNION SELECT alias FROM {DOMAIN_ALIASES_TBL} WHERE domain IN (SELECT domain FROM {DOMAIN_TBL} WHERE mail AND user = %s)"
 
     result, resultSet = DB.sql(sql, username, username)
     return [ dom[0] for dom in resultSet ]

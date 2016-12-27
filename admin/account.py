@@ -94,8 +94,8 @@ def check_login(login):
 
     sql = """
     SELECT domain FROM {DOMAIN_TBL} WHERE user = %s
-    UNION SELECT alias FROM {HTTP_ALIASES_TBL}
-    INNER JOIN {DOMAIN_TBL} ON {DOMAIN_TBL}.domain = {HTTP_ALIASES_TBL}.domain
+    UNION SELECT alias FROM {DOMAIN_ALIASES_TBL}
+    INNER JOIN {DOMAIN_TBL} ON {DOMAIN_TBL}.domain = {DOMAIN_ALIASES_TBL}.domain
     WHERE {DOMAIN_TBL}.user = %s
     """
     retVal, resultSet = DB.sql(sql, username, username)
