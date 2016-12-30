@@ -2,7 +2,7 @@
 
 from optparse import OptionParser
 from subprocess import check_output, Popen, PIPE
-import os, sys
+import crypt, os, sys
 import MySQLdb
 import common
 
@@ -165,11 +165,8 @@ def hash_pwd(options):
     if options.account_type == "mailbox":
         pwd = check_output( ["/usr/bin/doveadm","pw","-s", "SSHA512", "-p", options.password] )
     elif options.account_type == "ftp":
-        proc = Popen( ["/usr/sbin/ftpasswd", "--hash", "--stdin"], stdout=PIPE, stdin=PIPE)
-        output, err = proc.communicate(options.password)
-        if proc.returncode != 0:
-            raise subprocess.CalledProcessError(proc.returncode, "ftpasswd", output)
-        pwd = output[10:] # Omit the 'ftpasswd: ' at the beginning
+        pwd = crypt.crypt(options.password)
+
     options.password = pwd.strip()
     
         
