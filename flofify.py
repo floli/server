@@ -55,11 +55,10 @@ class Bucket():
         return filtered
 
     def check_age(self, file):
-        # print("File:", file)
-        fp = open(file, "r")
+        """ Checks if a message is older than self.max_age. Returns False if so. """
+        fp = open(file, "r", errors = "ignore")
         try:
             msg = email.parser.Parser().parse(fp, headersonly=True)
-            # msg = email.message_from_file(f)
         except UnicodeDecodeError as e: 
             print("Error reading file", file, "Ignoring file. Error is:")
             print(e)
