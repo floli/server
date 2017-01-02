@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import argparse, configparser, datetime, email, email.parser, glob, os, pickle, re, sys
+import argparse, configparser, datetime, email, email.parser, glob, os, pathlib, pickle, re, sys
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
@@ -18,9 +18,10 @@ class NormPath(argparse.Action):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Reads an email from stdin, classifies it and outputs to stdout.')
-    parser.add_argument("-r", "--rebuild", help="Forget all learned mails and rebuild.",
-                        action="store_true")
+    parser = argparse.ArgumentParser(description='Reads an email from stdin, classifies it and outputs to stdout.',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("action", help="Action to take. /classify/ mail delivered on stdout. /rebuild/ training data.",
+                        choices = ["classify", "rebuild"], nargs = "?", default = "classify")
     parser.add_argument("--config", help="Path to config file.",
                         default = XDG_CONFIG_HOME("flofify", "config"), action=NormPath)
     parser.add_argument("--model", help="Model file to use.",
@@ -111,7 +112,7 @@ class Model:
         for b in self.buckets:
             print(b)
         print("Fields:  %s" % self.fields)
-
+        
         
     def classify(self, text):
         """ Classsifies text, returns tuple (final class, probability, class). if probability is larger than min_probability then final class == class"""
@@ -219,18 +220,18 @@ class Configuration(configparser.ConfigParser):
 def main():
     args = parse_args()
 
-    common.mkpath(os.path.split(args.config)[0])
-    common.mkpath(os.path.split(args.model)[0])
-    common.mkpath(os.path.split(args.vocabulary)[0])
+    pathlib.Path(args.config).parent.mkdir(parents = True, exist_ok = True)
+    pathlib.Path(args.model).parent.mkdir(parents = True, exist_ok = True)
+    pathlib.Path(args.vocabulary).parent.mkdir(parents = True, exist_ok = True)
     
     config = Configuration()
     config.read(args.config)
 
     model = Model(config.buckets(), config.fields())
-    if args.rebuild:
+    if args.action == "rebuild":
         model.train()
         model.save(args.model, args.vocabulary)
-    else:
+    elif args.action == "classify":
         mail = UnicodeDammit(sys.stdin.detach().read())
         if mail:
             model.load(args.model, args.vocabulary)
