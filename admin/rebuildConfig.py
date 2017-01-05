@@ -6,18 +6,6 @@ import os, pwd, glob
 from string import Template
 from pathlib import Path
 
-   
-def addAliases(domainname):
-    """ Adds the reserved aliases for a given domain (e.g. hostmaster) to the table. """
-    sql = "INSERT INTO {VIRTUAL_TBL} (virtual, alias) VALUES "
-    args = []
-    for name in common.ADMIN_ALIASES:
-        sql += "(%s, 'root'), "
-        args.append(name + "@" + domainname)
-    sql = sql[:len(sql)-2]  # Remove the last kommata
-    DB.sql(sql,  *args)
-
-    
 def getTemplate(file):
     with open(file, "r") as f:
         templateStr = f.read()
@@ -30,15 +18,19 @@ def writeTemplate(inputTemplate, outputFile, **templateArgs):
     with open(outputFile, "w") as f:
         f.write(output)
 
+def get_mail_domains():
+    """ Return all domains that have mail enabled, including its aliases."""
+    sql = "SELECT domain FROM {DOMAIN_TBL} WHERE mail UNION SELECT alias FROM {DOMAIN_ALIASES_TBL} WHERE domain IN (SELECT domain FROM {DOMAIN_TBL} WHERE mail)"
+    retVal, domains = DB.sql(sql)
+    return domains
         
 def rebuildAliases():
-    """ Deletes all ALIASES and rebuilds them based on the entries from DOMAIN_TABLE. """
+    """ Deletes all administrative ALIASES and rebuilds them based on the entries from DOMAIN_TABLE. """
     for name in common.ADMIN_ALIASES:
         sql = "DELETE FROM {VIRTUAL_TBL} WHERE virtual LIKE '" + name + "@%'"
         DB.sql(sql)
 
-    sql = "SELECT domain FROM {DOMAIN_TBL} WHERE mail = TRUE"
-    retVal, domains = DB.sql(sql)
+    domains = get_mail_domains()
     # return should have only n rows with one field each.
     for dom in domains:
         domain = dom[0]
