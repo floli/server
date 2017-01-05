@@ -112,10 +112,17 @@ def rebuildAwstatsConfig():
         build_command += '/usr/share/awstats/tools/awstats_buildstaticpages.pl -config="{domain}" -lang="de" -dir="/home/{user}/{domain}/statistics/" \n'
         build_command += 'mv "/home/{user}/{domain}/statistics/awstats.{domain}.xml" "/home/{user}/{domain}/statistics/index.html" \n \n'
         build_command = build_command.format(user = user, domain = domain)
-        
-    writeTemplate("templates/awstats-build.sh.template", "output/awstats-build.sh", build_command = build_command)
-        
 
+    mail_domains = " ".join(i[0] for i in get_mail_domains()) # Each row is a tuple
+    writeTemplate("templates/awstats-mailconfig.template", "output/awstats.email.conf", aliases = mail_domains)
+
+    # Build command for mail statistics
+    build_command += '/usr/share/awstats/tools/awstats_buildstaticpages.pl -config="email" -lang="de" -dir="/home/flindner/centershock.net/mail-statistics/" \n'
+    build_command += 'mv "/home/flindner/centershock.net/mail-statistics/awstats.email.xml" "/home/flindner/centershock.net/mail-statistics/index.html" \n \n'
+
+    writeTemplate("templates/awstats-build.sh.template", "output/awstats-build.sh", build_command = build_command)
+
+    
 def test_and_create(path, user):
      """ Tests if a directory exists, if not creates it with 0700. """
      if not os.access(path, os.F_OK):
@@ -159,6 +166,8 @@ def moveFiles():
 
     for f in Path("./output").glob("awstats.*.*.conf"):
         f.rename(awstats_dir / f.name)
+
+    move("output/awstats.email.conf", "/etc/awstats/awstats.email.conf")
 
 import subprocess
 
