@@ -31,6 +31,7 @@ known_lists = {
     "users@open-mpi.org" : "open-mpi",
     "users@httpd.apache.org" : "httpd-users",
     "users@lists.open-mpi.org" : "openmpi-users",
+    "discuss@mpich.org" : "mpich-discuss",
 }
 
 # Dictionary of headers that need special treatment for listname extraction
