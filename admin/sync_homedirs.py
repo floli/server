@@ -20,8 +20,14 @@ lock.touch()
 for path in Path(".").iterdir():
     if path.is_dir() and path.name not in EXCLUDE and not (path / "STOP_SYNC").is_file():
         cmd = "rsync -avz --delete root@astarte.centershock.net:/home/{dir}/ /home/{dir}".format(dir = path)
-#        print(cmd)
-        subprocess.check_call(cmd, shell=True, stdout = subprocess.DEVNULL)
+        try:
+            subprocess.check_call(cmd, shell=True, stdout = subprocess.DEVNULL)
+        except subprocess.CalledProcessError as e:
+            if e.returncode == 24:
+                pass
+            else:
+                raise e
+        
         with (path / "LAST_SYNC").open("w") as f:
             f.write(datetime.datetime.now().isoformat(sep = " ") + "\n")
 

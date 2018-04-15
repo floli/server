@@ -60,3 +60,15 @@ def get_system_userdata():
     return username, uid, gid
 
 
+import smtplib, socket
+from email.mime.text import MIMEText
+
+def mail_user(user, subject, body):
+    localhost = socket.getfqdn()
+    msg = MIMEText(body)
+    msg['Subject'] = subject
+    msg['From'] = "root@%s" % localhost
+    msg['To'] = user + "@" + localhost
+    s = smtplib.SMTP('localhost')
+    s.sendmail(msg['From'], msg['To'], msg.as_string())
+    s.quit()

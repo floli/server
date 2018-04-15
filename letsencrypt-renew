@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+import argparse, functools, os, pathlib, subprocess, sys
+
+
+parser = argparse.ArgumentParser(description="Renew Let's Encrypt certificate")
+parser.add_argument('domain', type=str)
+parser.add_argument('--docroot', help = "Give a document root, other than the domain directory.", type=str)
+args = parser.parse_args()
+
+
+def exec(cmd, outfile, mode = "w"):
+    # Do not use shell redirection here, since I do not want to overwrite cert, when returncode != 0.
+    cp = subprocess.run(cmd, shell = True, check = True, stdout = subprocess.PIPE)
+    # in that case a CalledProcessError is raised at this point.
+    open(outfile, mode).write(cp.stdout.decode())
+    
+
+run = functools.partial(subprocess.run, shell=True, check=True)
+# run = lambda x: print(x)
+
+home = pathlib.Path.home()
+domain = args.domain
+docroot = args.docroot if args.docroot else args.domain
+challenge_dir = str(home / docroot / "pub/.well-known/acme-challenge")
+
+os.chdir(str(home / docroot / "ssl"))
+
+# print("cwd =", os.getcwd())
+
+cmd = "python /usr/local/acme-tiny/acme_tiny.py --account-key account.key --csr {domain}.csr --acme-dir {challenge}".format(domain = domain, challenge = challenge_dir)
+
+cert = "%s.cert" % domain
+exec(cmd, cert)
+exec("curl https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem", cert, "a")
+exec("curl https://letsencrypt.org/certs/letsencryptauthorityx3.pem", cert, "a")
+

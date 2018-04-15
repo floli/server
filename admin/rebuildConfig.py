@@ -6,18 +6,6 @@ import os, pwd, glob
 from string import Template
 from pathlib import Path
 
-   
-def addAliases(domainname):
-    """ Adds the reserved aliases for a given domain (e.g. hostmaster) to the table. """
-    sql = "INSERT INTO {VIRTUAL_TBL} (virtual, alias) VALUES "
-    args = []
-    for name in common.ADMIN_ALIASES:
-        sql += "(%s, 'root'), "
-        args.append(name + "@" + domainname)
-    sql = sql[:len(sql)-2]  # Remove the last kommata
-    DB.sql(sql,  *args)
-
-    
 def getTemplate(file):
     with open(file, "r") as f:
         templateStr = f.read()
@@ -30,15 +18,19 @@ def writeTemplate(inputTemplate, outputFile, **templateArgs):
     with open(outputFile, "w") as f:
         f.write(output)
 
+def get_mail_domains():
+    """ Return all domains that have mail enabled, including its aliases."""
+    sql = "SELECT domain FROM {DOMAIN_TBL} WHERE mail UNION SELECT alias FROM {DOMAIN_ALIASES_TBL} WHERE domain IN (SELECT domain FROM {DOMAIN_TBL} WHERE mail)"
+    retVal, domains = DB.sql(sql)
+    return domains
         
 def rebuildAliases():
-    """ Deletes all ALIASES and rebuilds them based on the entries from DOMAIN_TABLE. """
+    """ Deletes all administrative ALIASES and rebuilds them based on the entries from DOMAIN_TABLE. """
     for name in common.ADMIN_ALIASES:
         sql = "DELETE FROM {VIRTUAL_TBL} WHERE virtual LIKE '" + name + "@%'"
         DB.sql(sql)
 
-    sql = "SELECT domain FROM {DOMAIN_TBL} WHERE mail = TRUE"
-    retVal, domains = DB.sql(sql)
+    domains = get_mail_domains()
     # return should have only n rows with one field each.
     for dom in domains:
         domain = dom[0]
@@ -90,10 +82,10 @@ def rebuildApacheConfig():
         output += template.substitute(domain = domain, user = user, aliases = configAliases)
         output += "\n\n"
     
-    with open("output/generated-vhosts.conf", "w") as f:
+    with open("output/051_generated-vhosts.conf", "w") as f:
         f.write(output)
 
-    with open("output/generated-vhosts-ssl.conf", "w") as f:
+    with open("output/050_generated-vhosts-ssl.conf", "w") as f:
         f.write(outputSSL)
 
     
@@ -120,10 +112,17 @@ def rebuildAwstatsConfig():
         build_command += '/usr/share/awstats/tools/awstats_buildstaticpages.pl -config="{domain}" -lang="de" -dir="/home/{user}/{domain}/statistics/" \n'
         build_command += 'mv "/home/{user}/{domain}/statistics/awstats.{domain}.xml" "/home/{user}/{domain}/statistics/index.html" \n \n'
         build_command = build_command.format(user = user, domain = domain)
-        
-    writeTemplate("templates/awstats-build.sh.template", "output/awstats-build.sh", build_command = build_command)
-        
 
+    mail_domains = " ".join(i[0] for i in get_mail_domains()) # Each row is a tuple
+    writeTemplate("templates/awstats-mailconfig.template", "output/awstats.email.conf", aliases = mail_domains)
+
+    # Build command for mail statistics
+    build_command += '/usr/share/awstats/tools/awstats_buildstaticpages.pl -config="email" -lang="de" -dir="/home/flindner/centershock.net/mail-statistics/" \n'
+    build_command += 'mv "/home/flindner/centershock.net/mail-statistics/awstats.email.xml" "/home/flindner/centershock.net/mail-statistics/index.html" \n \n'
+
+    writeTemplate("templates/awstats-build.sh.template", "output/awstats-build.sh", build_command = build_command)
+
+    
 def test_and_create(path, user):
      """ Tests if a directory exists, if not creates it with 0700. """
      if not os.access(path, os.F_OK):
@@ -154,8 +153,8 @@ def addDomainDirs():
 from shutil import move
  
 def moveFiles():
-    move("output/generated-vhosts.conf", "/etc/apache2/sites-available/generated-vhosts.conf")
-    move("output/generated-vhosts-ssl.conf", "/etc/apache2/sites-available/generated-vhosts-ssl.conf")
+    move("output/051_generated-vhosts.conf", "/etc/apache2/sites-available/051_generated-vhosts.conf")
+    move("output/050_generated-vhosts-ssl.conf", "/etc/apache2/sites-available/050_generated-vhosts-ssl.conf")
     move("output/generated-logrotate.conf", "/etc/logrotate.d/generated-logrotate.conf") 
     move("output/awstats-build.sh", "/usr/local/bin/awstats-build.sh")
     Path("/usr/local/bin/awstats-build.sh").chmod(0o755)
@@ -168,6 +167,8 @@ def moveFiles():
     for f in Path("./output").glob("awstats.*.*.conf"):
         f.rename(awstats_dir / f.name)
 
+    move("output/awstats.email.conf", "/etc/awstats/awstats.email.conf")
+
 import subprocess
 
 def restartServices():
@@ -175,8 +176,8 @@ def restartServices():
     try:
         subprocess.check_output("apachectl configtest", shell=True, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
-        body = "Error from apache2ctl configtest. Returncode was %i.\n\n" % e.returncode + e.output
-        common.mailRoot(body, "Error from apache2ctl configtest")
+        body = "Error from apache2ctl configtest. Returncode was %i.\n\n" % e.returncode + e.output.decode('utf-8')
+        common.mail_user('root', "Error from apache2ctl configtest", body)
         print(body)
     else:
         print("Restarting apache.")
